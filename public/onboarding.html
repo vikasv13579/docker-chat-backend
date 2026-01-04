@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DoctorChat - Onboarding</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div class="container center-screen" style="display: block; margin-top: 5rem; margin-bottom: 5rem;">
+        <div class="glass-card" style="max-width: 800px; margin: 0 auto;">
+            <div class="step-indicator">
+                <div class="step active" id="step-1-ind">1</div>
+                <div class="step" id="step-2-ind">2</div>
+                <div class="step" id="step-3-ind">3</div>
+            </div>
+
+            <h2 id="step-title">Personal Information</h2>
+
+            <form id="onboarding-form">
+                <!-- Step 1: Personal Info -->
+                <div id="step-1" class="form-step">
+                    <label>Full Name</label>
+                    <input type="text" name="full_name" id="full_name" placeholder="John Doe" required>
+
+                    <label>Date of Birth</label>
+                    <input type="date" name="dob" id="dob" required>
+
+                    <label>Gender</label>
+                    <select name="gender" id="gender">
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                        <option value="Prefer not to say">Prefer not to say</option>
+                    </select>
+
+                    <label>Phone Number</label>
+                    <input type="tel" name="phone" id="phone" required>
+
+                    <label>Emergency Contact Name</label>
+                    <input type="text" name="emergency_name" id="emergency_name" required>
+
+                    <label>Emergency Contact Phone</label>
+                    <input type="tel" name="emergency_phone" id="emergency_phone" required>
+                </div>
+
+                <!-- Step 2: Medical History -->
+                <div id="step-2" class="form-step hidden">
+                    <label>Blood Type</label>
+                    <select name="blood_type" id="blood_type">
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                        <option value="Unknown">Unknown</option>
+                    </select>
+
+                    <label>Current Medications (Max 500 chars)</label>
+                    <textarea name="medications" id="medications" maxlength="500"></textarea>
+
+                    <label>Known Allergies (Multi-select)</label>
+                    <select name="allergies" id="allergies" multiple style="height: 100px;">
+                        <option value="Penicillin">Penicillin</option>
+                        <option value="Aspirin">Aspirin</option>
+                        <option value="Sulfa">Sulfa</option>
+                        <option value="Latex">Latex</option>
+                        <option value="Shellfish">Shellfish</option>
+                        <option value="None">None</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <small>Hold Ctrl/Cmd to select multiple</small>
+
+                    <label style="margin-top: 1rem; display:block;">Chronic Conditions</label>
+                    <div id="conditions-container"
+                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem;">
+                        <label><input type="checkbox" name="chronic_conditions" value="Diabetes"> Diabetes</label>
+                        <label><input type="checkbox" name="chronic_conditions" value="Hypertension">
+                            Hypertension</label>
+                        <label><input type="checkbox" name="chronic_conditions" value="Asthma"> Asthma</label>
+                        <label><input type="checkbox" name="chronic_conditions" value="Heart Disease"> Heart
+                            Disease</label>
+                        <label><input type="checkbox" name="chronic_conditions" value="Arthritis"> Arthritis</label>
+                        <label><input type="checkbox" name="chronic_conditions" value="None"> None</label>
+                    </div>
+
+                    <label>Previous Surgeries</label>
+                    <textarea name="surgeries" id="surgeries"></textarea>
+
+                    <label>Family Medical History (Max 300 chars)</label>
+                    <textarea name="family_history" id="family_history" maxlength="300"></textarea>
+                </div>
+
+                <!-- Step 3: Insurance & Preferences -->
+                <div id="step-3" class="form-step hidden">
+                    <label>Insurance Provider</label>
+                    <input type="text" name="insurance_provider" id="insurance_provider" required>
+
+                    <label>Insurance ID</label>
+                    <input type="text" name="insurance_id" id="insurance_id" required>
+
+                    <label>Policy Holder Name</label>
+                    <input type="text" name="policy_holder" id="policy_holder" required>
+
+                    <label>Preferred Doctor</label>
+                    <select name="preferred_doctor_id" id="preferred_doctor_id" required>
+                        <option value="" disabled selected>Loading doctors...</option>
+                    </select>
+
+                    <label>Preferred Time Slot</label>
+                    <select name="preferred_time" id="preferred_time">
+                        <option value="Morning">Morning</option>
+                        <option value="Afternoon">Afternoon</option>
+                        <option value="Evening">Evening</option>
+                    </select>
+
+                    <label>Referral Source</label>
+                    <select name="referral_source" id="referral_source">
+                        <option value="Google">Google</option>
+                        <option value="Friend">Friend</option>
+                        <option value="Doctor Referral">Doctor Referral</option>
+                        <option value="Ad">Ad</option>
+                        <option value="Other">Other</option>
+                    </select>
+
+                    <label>Additional Notes (Max 200 chars)</label>
+                    <textarea name="notes" id="notes" maxlength="200"></textarea>
+
+                    <!-- Summary Preview -->
+                    <div class="glass-card" style="margin-top: 1rem; background: rgba(0,0,0,0.2);">
+                        <h3>Review</h3>
+                        <p id="review-text" style="font-size: 0.9rem; white-space: pre-wrap;"></p>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; margin-top: 2rem;">
+                    <button type="button" id="prev-btn" class="btn btn-secondary hidden">Previous</button>
+                    <button type="button" id="next-btn" class="btn">Next</button>
+                    <button type="submit" id="submit-btn" class="btn hidden">Submit Onboarding</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        let currentStep = 1;
+        const totalSteps = 3;
+
+        async function loadDoctors() {
+            try {
+                const res = await window.authFetch('/api/doctors');
+                if (!res) return;
+                const doctors = await res.json();
+                const select = document.getElementById('preferred_doctor_id');
+                select.innerHTML = '<option value="" disabled selected>Select a Doctor</option>';
+                doctors.forEach(doc => {
+                    const opt = document.createElement('option');
+                    opt.value = doc.id;
+                    opt.textContent = `${doc.full_name} (${doc.specialization || 'General'})`;
+                    select.appendChild(opt);
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        async function init() {
+            await loadDoctors();
+            await loadDraft();
+        }
+
+        async function loadDraft() {
+            try {
+                const res = await window.authFetch('/api/onboarding/status');
+                if (!res) return;
+                const body = await res.json();
+
+                if (body && body.data) {
+                    const d = body.data;
+                    // Populate inputs
+                    for (const key in d) {
+                        const el = document.getElementsByName(key)[0];
+                        if (el) {
+                            if (el.type === 'checkbox') {
+                                // Handle multi-checkbox
+                                const vals = d[key] || [];
+                                document.getElementsByName(key).forEach(cb => {
+                                    if (vals.includes(cb.value)) cb.checked = true;
+                                });
+                            } else if (el.type === 'select-multiple') {
+                                // Handle multi-select
+                                const vals = d[key] || [];
+                                Array.from(el.options).forEach(opt => {
+                                    if (vals.includes(opt.value)) opt.selected = true;
+                                });
+                            } else {
+                                el.value = d[key];
+                            }
+                        }
+                    }
+                    if (body.current_step) {
+                        currentStep = body.current_step;
+                        showStep(currentStep);
+                    }
+                }
+                if (body.status === 'submitted') window.location.href = '/dashboard.html';
+            } catch (e) { console.error(e); }
+        }
+
+        // Helper to collect data including multi-selects
+        function getFormData() {
+            const formData = new FormData(document.getElementById('onboarding-form'));
+            const data = {};
+            formData.forEach((value, key) => {
+                // If it's already there (multi-select/checkbox), make array
+                if (data[key]) {
+                    if (!Array.isArray(data[key])) data[key] = [data[key]];
+                    data[key].push(value);
+                } else {
+                    data[key] = value;
+                }
+            });
+            // Handle select-multiple explicitly if needed or ensuring arrays
+            const allergies = Array.from(document.getElementById('allergies').selectedOptions).map(o => o.value);
+            if (allergies.length > 0) data.allergies = allergies;
+
+            const conditions = Array.from(document.querySelectorAll('input[name="chronic_conditions"]:checked')).map(c => c.value);
+            if (conditions.length > 0) data.chronic_conditions = conditions;
+
+            return data;
+        }
+
+        async function saveDraft() {
+            const data = getFormData();
+            try {
+                await window.authFetch('/api/onboarding/draft', {
+                    method: 'POST',
+                    body: JSON.stringify({ stepData: data, currentStep })
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        function showStep(step) {
+            [1, 2, 3].forEach(i => document.getElementById(`step-${i}`).classList.add('hidden'));
+            document.getElementById(`step-${step}`).classList.remove('hidden');
+
+            // Indicators
+            for (let i = 1; i <= 3; i++) {
+                const el = document.getElementById(`step-${i}-ind`);
+                el.classList.toggle('active', i === step);
+                el.classList.toggle('completed', i < step);
+            }
+
+            // Show Review on Step 3
+            if (step === 3) {
+                const data = getFormData();
+                let summary = '';
+                for (const [k, v] of Object.entries(data)) {
+                    summary += `${k}: ${v}\n`;
+                }
+                document.getElementById('review-text').textContent = summary || 'No data entered.';
+            }
+
+            document.getElementById('prev-btn').classList.toggle('hidden', step === 1);
+            document.getElementById('next-btn').classList.toggle('hidden', step === 3);
+            document.getElementById('submit-btn').classList.toggle('hidden', step !== 3);
+        }
+
+        document.getElementById('next-btn').addEventListener('click', async () => {
+            if (currentStep < totalSteps) {
+                // Simple validation check: ensure not empty for required
+                const inputs = document.getElementById(`step-${currentStep}`).querySelectorAll('[required]');
+                let valid = true;
+                inputs.forEach(i => { if (!i.value) valid = false; });
+                if (!valid) { alert('Please fill required fields.'); return; }
+
+                await saveDraft();
+                currentStep++;
+                showStep(currentStep);
+            }
+        });
+
+        document.getElementById('prev-btn').addEventListener('click', () => {
+            if (currentStep > 1) { currentStep--; showStep(currentStep); }
+        });
+
+        document.getElementById('submit-btn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            await saveDraft();
+            try {
+                const res = await window.authFetch('/api/onboarding/submit', { method: 'POST' });
+                const data = await res.json();
+                if (res.ok) {
+                    window.location.href = '/dashboard.html';
+                } else {
+                    alert(data.error || 'Submission failed');
+                }
+            } catch (err) { alert('Error submitting'); }
+        });
+
+        init();
+    </script>
+</body>
+
+</html>

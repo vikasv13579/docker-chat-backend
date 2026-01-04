@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DoctorChat - Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        .unread-badge {
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 0.8rem;
+            margin-left: 0.5rem;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+            background: #94a3b8;
+            /* Offline/Gray */
+        }
+
+        .status-online {
+            background: #22c55e;
+            /* Online/Green */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h2>DoctorChat Dashboard</h2>
+            <button onclick="logout()" class="btn btn-secondary">Logout</button>
+        </header>
+
+        <div class="glass-card chat-layout">
+            <div class="rooms-list" id="rooms-list">
+                <h3>My Chats</h3>
+                <div id="loading-rooms">Loading chats...</div>
+            </div>
+
+            <div class="chat-area hidden" id="chat-area">
+                <div style="border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem; margin-bottom: 1rem;">
+                    <h3 id="room-header">Chat</h3>
+                    <small id="typing-indicator"
+                        style="color: var(--secondary-color); height: 1rem; display: block;"></small>
+                </div>
+
+                <div class="messages-container" id="messages-container"></div>
+
+                <div class="chat-input-area">
+                    <input type="text" id="message-input" placeholder="Type a message...">
+                    <button id="send-btn" class="btn">Send</button>
+                </div>
+            </div>
+
+            <div id="empty-state" class="chat-area center-screen">
+                <p>Select a chat to start messaging</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        const user = JSON.parse(localStorage.getItem('user'));
+        const token = localStorage.getItem('token');
+        let socket;
+        let currentRoomId = null;
+        let typingTimeout;
+        let onlineUsers = new Set();
+        let roomsData = [];
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/';
+        }
+
+        async function init() {
+            socket = io({ auth: { token } });
+
+            socket.on('connect_error', (err) => console.error("Socket Auth Error", err));
+
+            socket.on('receive_message', (msg) => {
+                if (msg.room_id === currentRoomId) {
+                    appendMessage(msg);
+                    // Mark as read immediately if open? (Backend handles explicit read on fetch, but for real-time we assume read if open)
+                    // For simplicity, we just rely on next fetch to mark true.
+                } else {
+                    // Update unread count for that room
+                    updateUnreadCount(msg.room_id, 1);
+                }
+            });
+
+            socket.on('message_notification', ({ roomId, senderId }) => {
+                if (roomId !== currentRoomId) {
+                    updateUnreadCount(roomId, 1);
+                }
+            });
+
+            socket.on('online_users', (users) => {
+                users.forEach(u => onlineUsers.add(u));
+                renderRooms();
+            });
+
+            socket.on('user_status', ({ userId, status }) => {
+                if (status === 'online') onlineUsers.add(userId);
+                else onlineUsers.delete(userId);
+                renderRooms();
+            });
+
+            socket.on('user_typing', ({ userId, isTyping }) => {
+                const indicator = document.getElementById('typing-indicator');
+                if (isTyping && userId !== user.id) indicator.textContent = "Typing...";
+                else indicator.textContent = "";
+            });
+
+            await loadRooms();
+        }
+
+        async function loadRooms() {
+            try {
+                const res = await window.authFetch('/api/chat/rooms');
+                roomsData = await res.json();
+                document.getElementById('loading-rooms').remove();
+                renderRooms();
+            } catch (err) { console.error(err); }
+        }
+
+        function updateUnreadCount(roomId, increment) {
+            const room = roomsData.find(r => r.id === roomId);
+            if (room) {
+                room.unread_count = (room.unread_count || 0) + increment;
+                renderRooms();
+            }
+        }
+
+        function renderRooms() {
+            const list = document.getElementById('rooms-list');
+            // Keep header
+            list.innerHTML = '<h3>My Chats</h3>';
+
+            if (roomsData.length === 0) {
+                list.innerHTML += '<p style="padding:1rem; opacity:0.7">No active chats.</p>';
+            }
+
+            roomsData.forEach(room => {
+                const el = document.createElement('div');
+                el.className = 'room-item';
+                if (currentRoomId === room.id) el.classList.add('active');
+
+                const partner = user.role === 'patient' ? room.doctor : room.patient;
+                const partnerId = partner?.id;
+                const isOnline = onlineUsers.has(partnerId);
+
+                el.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <span class="status-indicator ${isOnline ? 'status-online' : ''}"></span>
+                            ${partner?.full_name || 'Unknown'}
+                        </div>
+                        ${room.unread_count > 0 ? `<span class="unread-badge">${room.unread_count}</span>` : ''}
+                    </div>
+                `;
+
+                el.onclick = () => selectRoom(room.id, partner?.full_name);
+                list.appendChild(el);
+            });
+        }
+
+        async function selectRoom(roomId, partnerName) {
+            currentRoomId = roomId;
+            // Clear unread count locally
+            const room = roomsData.find(r => r.id === roomId);
+            if (room) room.unread_count = 0;
+            renderRooms();
+
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('chat-area').classList.remove('hidden');
+            document.getElementById('room-header').textContent = `Chat with ${partnerName}`;
+
+            socket.emit('join_room', roomId);
+
+            const container = document.getElementById('messages-container');
+            container.innerHTML = 'Loading...';
+
+            try {
+                const res = await window.authFetch(`/api/chat/rooms/${roomId}/messages`);
+                const messages = await res.json();
+                container.innerHTML = '';
+                messages.forEach(appendMessage);
+                scrollToBottom();
+            } catch (e) { console.error(e); }
+        }
+
+        function appendMessage(msg) {
+            const container = document.getElementById('messages-container');
+            const div = document.createElement('div');
+            const isOwn = msg.sender_id === user.id;
+            div.className = `message ${isOwn ? 'message-own' : 'message-other'}`;
+            div.textContent = msg.content;
+            div.title = new Date(msg.created_at).toLocaleTimeString();
+            container.appendChild(div);
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            const container = document.getElementById('messages-container');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        const input = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
+
+        async function sendMessage() {
+            const content = input.value.trim();
+            if (!content || !currentRoomId) return;
+            socket.emit('send_message', { roomId: currentRoomId, content });
+            input.value = '';
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+            socket.emit('typing', { roomId: currentRoomId, isTyping: true });
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                socket.emit('typing', { roomId: currentRoomId, isTyping: false });
+            }, 1000);
+        });
+
+        init();
+    </script>
+</body>
+
+</html>
